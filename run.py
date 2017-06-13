@@ -16,14 +16,26 @@ class Transformation:
         self.maxY = source.shape[0]
 
     def run(self):
+        # Open a window for the user to outline four corners
+        # Use mouse to left click then press Spacebar to confirm
+        # A red dot should appear at the mouse cursor as confirmation
+        # Press ESC to quit
         cv.namedWindow('image')
         cv.setMouseCallback('image', self.handle_click)
-        edges = []
+        corners = []
         while True:
             cv.imshow('image', self.sourceCopy)
-            if (len(edges) == 4):
-                edges = self.sortEdges(edges)
-                H = self.calculateHomography(edges)
+            if (len(corners) == 4):
+
+                # Once we have four corners we sort the them to guarantee
+                # the following order: [Top_left, Bottom_left, Bottom_right, Top_right]
+                corners = self.sortCorners(corners)
+
+                # Calculate the homography matrix
+                H = self.calculateHomography(corners)
+
+                # We need to perform inverse warping so we need the inverse
+                # of the homography matrix
                 H_inv = np.linalg.inv(H)
                 return self.inverseWarp(H_inv)
 
@@ -31,9 +43,9 @@ class Transformation:
             if key == 27:
                 break
             elif key == ord(' '):
-                if (len(edges) < 4):
+                if (len(corners) < 4):
                     cv.circle(self.sourceCopy, (mouseX, mouseY), 3, (0, 0, 255), -1)
-                    edges.append((mouseX, mouseY))
+                    corners.append((mouseX, mouseY))
         return 0
 
     def handle_click(self, event, x, y, flags, param):
@@ -42,13 +54,17 @@ class Transformation:
             mouseX, mouseY = x, y
 
     def inverseWarp(self, H):
+        # Generate index vectors for efficient computation
         image = np.zeros_like(self.source, dtype=np.uint8)
         rowVec = np.arange(1, self.outY + 1)[:, None]
         colVec = np.arange(1, self.outX + 1)[None, :]
         rowIndices = np.dot(rowVec, np.ones((1, colVec.size), dtype=np.float32))
         colIndices = np.dot(np.ones((rowVec.size, 1), dtype=np.float32), colVec)
 
+        # Transform each pixel
         r, c = self.getCoord(H, rowIndices, colIndices)
+
+        # Use bilinear interpolation to get the color values from the source image
         image = self.bilinear_interpolate(r-1, c-1)
 
         return image
@@ -59,6 +75,7 @@ class Transformation:
         return _y, _x
 
     def bilinear_interpolate(self, y, x):
+        # Method adapted from https://stackoverflow.com/questions/12729228/simple-efficient-bilinear-interpolation-of-images-in-numpy-and-python
         x0 = np.floor(x).astype(int)
         x1 = x0 + 1
         y0 = np.floor(y).astype(int)
@@ -82,16 +99,17 @@ class Transformation:
         image = (wa*Ia + wb*Ib + wc*Ic + wd*Id).astype(np.uint8)
         return image
 
-    def calculateHomography(self, edges):
-        x1 = edges[0][0]
-        x2 = edges[1][0]
-        x3 = edges[2][0]
-        x4 = edges[3][0]
+    def calculateHomography(self, corners):
+        # Sets up the system of linear equations and solves for the transformation coefficients
+        x1 = corners[0][0]
+        x2 = corners[1][0]
+        x3 = corners[2][0]
+        x4 = corners[3][0]
 
-        y1 = edges[0][1]
-        y2 = edges[1][1]
-        y3 = edges[2][1]
-        y4 = edges[3][1]
+        y1 = corners[0][1]
+        y2 = corners[1][1]
+        y3 = corners[2][1]
+        y4 = corners[3][1]
 
         _x1 = 1
         _x2 = 1
@@ -113,13 +131,14 @@ class Transformation:
             [x4, y4, 1, 0, 0, 0, -x4*_x4, -y4*_x4],
             [0, 0, 0, x4, y4, 1, -x4*_y4, -y4*_y4]])
         B = np.array([[_x1],[_y1],[_x2],[_y2],[_x3],[_y3],[_x4],[_y4]])
-
         X = np.linalg.solve(A,B)
         X = np.append(X, [1])
         return X.reshape(3,3)
 
-    def sortEdges(self, edges):
-        sortX = sorted(edges, key=lambda x: x[0])
+    def sortCorners(self, corners):
+        # Takes in four corners as a list of tuples of the form (x, y) and
+        # sorts them in the following order: [Top_left, Bottom_left, Bottom_right, Top_right]
+        sortX = sorted(corners, key=lambda x: x[0])
         sortY1 = sorted(sortX[:2], key=lambda y: y[1])
         sortY2 = sorted(sortX[2:], key=lambda y: y[1], reverse=True)
         result = sortY1 + sortY2
