@@ -8,13 +8,18 @@ from util import *
 
 class Transformation:
     global mouseX, mouseY
-    def __init__(self, source, width, height):
+    def __init__(self, source, width, height, outputPath):
         self.source = source
         self.sourceCopy = self.source.copy()
         self.outX = width
         self.outY = height
         self.maxX = source.shape[1]
         self.maxY = source.shape[0]
+        self.outputPath = str(outputPath.split('.')[0]) + '_mask.' + str(outputPath.split('.')[1:])
+        splitString = outputPath.split('.')
+        self.outputPath = str(splitString[0]) + '_mask.'
+        for i in range(1, len(splitString)):
+            self.outputPath += str(splitString[i])
 
     def run(self):
         # Open a window for the user to outline four corners
@@ -27,6 +32,8 @@ class Transformation:
         while True:
             cv.imshow('image', self.sourceCopy)
             if (len(corners) == 4):
+                # Write the four selected points to a file
+                writeImage(self.outputPath, self.sourceCopy)
 
                 # Once we have four corners we sort the them to guarantee
                 # the following order: [Top_left, Bottom_left, Bottom_right, Top_right]
@@ -149,7 +156,7 @@ def main(args):
     source = readSource(args.s)
     assert source is not None
 
-    transformation = Transformation(source, args.x, args.y)
+    transformation = Transformation(source, args.x, args.y, args.o)
     result = transformation.run()
     debug(result)
     writeImage(args.o, result)
