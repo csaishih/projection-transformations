@@ -4,6 +4,7 @@
 import numpy as np
 import cv2 as cv
 import argparse, os, sys
+from util import *
 
 class Transformation:
     global mouseX, mouseY
@@ -143,28 +144,6 @@ class Transformation:
         sortY2 = sorted(sortX[2:], key=lambda y: y[1], reverse=True)
         result = sortY1 + sortY2
         return sortY1 + sortY2
-
-def debug(image):
-    # Display the image
-    cv.imshow('image', image)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-
-def readSource(fileName):
-    try:
-        source = cv.imread(fileName, 1)
-    except:
-        print("[ERROR] Source must be a color uint8 image")
-        return None
-    return source
-
-def writeImage(fileName, image):
-    try:
-        cv.imwrite(fileName, image)
-        success = True
-    except:
-        success = False
-    return success
 
 def main(args):
     source = readSource(args.s)
