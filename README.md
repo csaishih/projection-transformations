@@ -1,5 +1,8 @@
-# Image Transformations
+# Projection Transformations
+Transformations allow us to describe an image with a new set of coordinates.  
+This repo demonstrates the ability to transform quadrilaterals into rectangles.
 
+## Running the script
 ###### Dependencies
   * [NumPy](http://www.numpy.org/)
   * [OpenCV](http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_tutorials.html)
@@ -10,7 +13,7 @@
 ###### Example usage
 `python run.py -s test_images/test1/source.jpg -o test_images/test1/out.png -x 500 -y 350`
 
-# Results
+## Results
 ###### Test 1 source
 ![alt text](https://github.com/g3aishih/projection-transformations/blob/master/test_images/test1/source.jpg "Test 1 source")
 
