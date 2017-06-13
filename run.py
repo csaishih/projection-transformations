@@ -15,9 +15,8 @@ class Transformation:
         self.outY = height
         self.maxX = source.shape[1]
         self.maxY = source.shape[0]
-        self.outputPath = str(outputPath.split('.')[0]) + '_mask.' + str(outputPath.split('.')[1:])
         splitString = outputPath.split('.')
-        self.outputPath = str(splitString[0]) + '_mask.'
+        self.outputPath = str(splitString[0]) + '_corners.'
         for i in range(1, len(splitString)):
             self.outputPath += str(splitString[i])
 
